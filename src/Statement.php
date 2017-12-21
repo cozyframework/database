@@ -7,6 +7,7 @@ class Statement
     /** @var \PDOStatement */
     protected $pdoStatement;
     protected $wasExecuted = false;
+    protected $autoExecute = true;
     protected $paramsMap = [];  // ['param_name' => 'type']
 
     /**
@@ -124,6 +125,19 @@ class Statement
     }
 
     /**
+     * Define if the statement will execute automatically when trying to fetch data.
+     *
+     * @param bool $flag
+     * @return $this
+     */
+    public function setAutoExecute(bool $flag)
+    {
+        $this->autoExecute = $flag;
+
+        return $this;
+    }
+
+    /**
      * Execute the statement and return the number of rows that were modified or deleted.
      * If no rows were affected, this method returns 0. This method may return Boolean FALSE, but may also return a
      * non-Boolean value which evaluates to FALSE, so use the === operator for testing the return value of this method.
@@ -197,8 +211,8 @@ class Statement
     {
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -210,7 +224,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         if ($row === false && $this->pdoStatement->errorCode() === '00000') {
             return null;
@@ -236,8 +249,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -249,7 +262,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         if ($row === false && $this->pdoStatement->errorCode() === '00000') {
             return null;
@@ -274,8 +286,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -288,7 +300,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         if ($row === false && $this->pdoStatement->errorCode() === '00000') {
             return null;
@@ -313,8 +324,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -326,6 +337,11 @@ class Statement
 
         if ($row === false) {
             $this->pdoStatement->closeCursor();
+
+            if ($this->pdoStatement->errorCode() === '00000') {
+                return null;
+            }
+
             return false;
         }
 
@@ -336,7 +352,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         return $row[$column];
     }
@@ -362,8 +377,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -377,6 +392,11 @@ class Statement
 
         if ($row === false) {
             $this->pdoStatement->closeCursor();
+
+            if ($this->pdoStatement->errorCode() === '00000') {
+                return null;
+            }
+
             return false;
         }
 
@@ -397,14 +417,12 @@ class Statement
                 $result[] = $row[$column];
             }
 
-
             $row = $this->pdoStatement->fetch(\PDO::FETCH_ASSOC);
         }
 
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         return $result;
     }
@@ -430,8 +448,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -446,6 +464,11 @@ class Statement
 
         if ($row === false) {
             $this->pdoStatement->closeCursor();
+
+            if ($this->pdoStatement->errorCode() === '00000') {
+                return null;
+            }
+
             return false;
         }
 
@@ -515,7 +538,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         return $result;
     }
@@ -547,8 +569,8 @@ class Statement
 
         // Auto execute block
 
-        if (!$this->wasExecuted) {
-            if (!$this->execute()) {
+        if (!$this->wasExecuted || $this->autoExecute) {
+            if ($this->execute() === false) {
                 return false;
             }
         }
@@ -563,6 +585,11 @@ class Statement
 
         if ($row === false) {
             $this->pdoStatement->closeCursor();
+
+            if ($this->pdoStatement->errorCode() === '00000') {
+                return null;
+            }
+
             return false;
         }
 
@@ -632,7 +659,6 @@ class Statement
         // Clear state and return result
 
         $this->pdoStatement->closeCursor();
-//        $this->wasExecuted = false;
 
         return $result;
     }
