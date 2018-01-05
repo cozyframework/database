@@ -125,6 +125,41 @@ class Statement
     }
 
     /**
+     * Binds a value to a parameter.
+     *
+     * @param mixed $parameter Parameter identifier.
+     * @param mixed $value The value to bind to the parameter.
+     * @param string $data_type [optional] Explicit data type for the parameter.
+     * @return $this
+     */
+    public function bindValue($parameter, $value, string $data_type = 'str')
+    {
+        if ($value === null) {
+            if (!$this->pdoStatement->bindValue($parameter, null, \PDO::PARAM_NULL)) {
+                throw new \RuntimeException("Error binding the parameter [{$parameter}].");
+            }
+        }
+
+        $type = \PDO::PARAM_STR;
+
+        if ($data_type === 'int' || $data_type === 'integer' || $data_type === \PDO::PARAM_INT) {
+            $type = \PDO::PARAM_INT;
+        } elseif ($data_type === 'bool' || $data_type === 'boolean' || $data_type === \PDO::PARAM_BOOL) {
+            $type = \PDO::PARAM_BOOL;
+        } elseif ($data_type === 'lob' || $data_type === 'blob' || $data_type === \PDO::PARAM_LOB) {
+            $type = \PDO::PARAM_LOB;
+        } elseif ($data_type === 'null' || $data_type === \PDO::PARAM_NULL) {
+            $type = \PDO::PARAM_NULL;
+        }
+
+        if (!$this->pdoStatement->bindValue($parameter, $value, $type)) {
+            throw new \RuntimeException("Error binding the parameter [{$parameter}].");
+        }
+
+        return $this;
+    }
+
+    /**
      * Define if the statement will execute automatically when trying to fetch data.
      *
      * @param bool $flag
