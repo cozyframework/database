@@ -33,7 +33,6 @@ class ConnectionPool
     public function getConnection(string $tag = 'main'): Connection
     {
         if (isset($this->current[$tag]) && $this->current[$tag] instanceof Connection) {
-            /** var Connection $this->current[$tag] */
             if ($this->current[$tag]->isAlive()) {
                 return $this->current[$tag];
             } else {
