@@ -37,6 +37,21 @@ class Connection
         return $this->pdo;
     }
 
+    public function isAlive(): bool
+    {
+        try {
+
+            if (@$this->pdo->query('SELECT 1') == false) {
+                return false;
+            }
+
+            return true;
+
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
     /**
      * Returns error information about the last operation on the database handle.
      *
