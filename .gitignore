@@ -1,6 +1,6 @@
 /vendor
-/build
 /.idea
+/.vscode
 composer.phar
 php_errors.log
 .php_cs.cache
