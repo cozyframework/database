@@ -37,13 +37,11 @@ class SQLiteConfiguration implements ConfigurationInterface
     public function buildConnection(): Connection
     {
         try {
-
             if (!isset($this->pdo) || !($this->pdo instanceof \PDO)) {
                 $this->pdo = new \PDO($this->dsn, null, null, $this->pdo_options);
             }
 
             return new Connection($this->pdo);
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e->errorInfo);
         }

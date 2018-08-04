@@ -103,11 +103,11 @@ class Statement
     /**
      * Bind a column to a PHP variable.
      *
-     * @param mixed $column Number of the column (1-indexed) or name of the column in the result set. If using the column name, be aware that the name should match the case of the column, as returned by the driver.
+     * @param mixed $column Number of the column (1-indexed) or name of the column in the result set. If using the
+     *                      column name, be aware that the name should match the case of the column, as returned by
+     *                      the driver.
      * @param mixed $param Name of the PHP variable to which the column will be bound.
      * @param mixed $type [optional] Data type of the parameter, specified by the PDO::PARAM_* constants.
-     * @param int $maxlen [optional] A hint for pre-allocation.
-     * @param mixed $driverdata [optional] Optional parameter(s) for the driver.
      * @return $this
      * @throws Exception
      */
@@ -156,7 +156,6 @@ class Statement
     public function execute(): bool
     {
         try {
-
             $this->wasExecuted = true;
 
             if ($this->pdoStatement->execute()) {
@@ -165,7 +164,6 @@ class Statement
             }
 
             return false;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -219,7 +217,6 @@ class Statement
     public function closeCursor(): bool
     {
         try {
-
             if ($this->pdoStatement->closeCursor()) {
                 $this->wasExecuted = false;
 
@@ -227,7 +224,6 @@ class Statement
             }
 
             return false;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -246,9 +242,7 @@ class Statement
     public function nextRowset()
     {
         try {
-
             return $this->pdoStatement->nextRowset();
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -268,7 +262,6 @@ class Statement
     private function internalFetch()
     {
         try {
-
             // Auto execute block
 
             if ($this->autoExecuteEnabled && !$this->wasExecuted) {
@@ -297,7 +290,6 @@ class Statement
             }
 
             return $row;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -438,7 +430,6 @@ class Statement
     public function fetchAllAsColumn(string $column, string $index_by = null)
     {
         try {
-
             // Validations
 
             if ($column == '') {
@@ -507,7 +498,6 @@ class Statement
             $this->pdoStatement->closeCursor();
 
             return $result;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -522,14 +512,14 @@ class Statement
      * Returns an associative array containing all of the result set.
      *
      * @param string $index_by Name of the column you want to assign as a row key.
-     * @param string $group_by Name of the columns with which you want to group the result. You can include max. 3 columns by separating them with commas.
+     * @param string $group_by Name of the columns with which you want to group the result. You can include
+     *                         maximum 3 columns by separating them with commas.
      * @return array|bool
      * @throws Exception
      */
     public function fetchAllAsArray(string $index_by = null, string $group_by = null)
     {
         try {
-
             // Validations
 
             if (isset($index_by) && $index_by == '') {
@@ -590,7 +580,8 @@ class Statement
 
                     if ($column_err) {
                         throw new Exception(
-                            'Some columns to group-by (' . implode(', ', $column_err) . ') are not present in the result set.',
+                            'Some columns to group-by (' . implode(', ', $column_err) .
+                            ') are not present in the result set.',
                             'CZ002',
                             [],
                             $this->pdoStatement->queryString
@@ -640,7 +631,6 @@ class Statement
             $this->pdoStatement->closeCursor();
 
             return $result;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),
@@ -657,14 +647,18 @@ class Statement
      * @param string $class_name Name of the class you want to instantiate.
      * @param array $class_arguments Elements of this array are passed to the constructor of the class instantiated.
      * @param string $index_by Name of the column you want to assign as a row key.
-     * @param string $group_by Name of the columns with which you want to group the result. You can include max. 3 columns by separating them with commas.
+     * @param string $group_by Name of the columns with which you want to group the result. You can include
+     *                         maximum 3 columns by separating them with commas.
      * @return array|bool
      * @throws Exception
      */
-    public function fetchAllAsObject(string $class_name = 'stdClass', array $class_arguments = null, string $index_by = null, string $group_by = null)
-    {
+    public function fetchAllAsObject(
+        string $class_name = 'stdClass',
+        array $class_arguments = null,
+        string $index_by = null,
+        string $group_by = null
+    ) {
         try {
-
             // Validations
 
             if ($class_name === '') {
@@ -717,7 +711,9 @@ class Statement
                 $groupByCount = count($group_by);
 
                 if ($groupByCount > 3) {
-                    throw new \InvalidArgumentException('You have exceeded the limit of 3 columns to group-by.');
+                    throw new \InvalidArgumentException(
+                        'You have exceeded the limit of 3 columns to group-by.'
+                    );
                 }
 
                 foreach ($group_by as $column) {
@@ -729,7 +725,8 @@ class Statement
 
                     if ($column_err) {
                         throw new Exception(
-                            'Some columns to group-by (' . implode(', ', $column_err) . ') are not present in the result set.',
+                            'Some columns to group-by (' . implode(', ', $column_err) .
+                            ') are not present in the result set.',
                             'CZ002',
                             [],
                             $this->pdoStatement->queryString
@@ -748,7 +745,14 @@ class Statement
                 } elseif ($index_by && $group_by) {
                     switch ($groupByCount) {
                         case 3:
-                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}][$row->{$group_by[2]}][$row->{$index_by}] = $row;
+                            $temp = [
+                                $row->{$group_by[2]} => [
+                                    $row->{$index_by} => $row
+                                ]
+                            ];
+                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}] = $temp;
+// $result[$row->{$group_by[0]}][$row->{$group_by[1]}] >>>>
+// <<<< [$row->{$group_by[2]}][$row->{$index_by}] = $row;
                             break;
                         case 2:
                             $result[$row->{$group_by[0]}][$row->{$group_by[1]}][$row->{$index_by}] = $row;
@@ -779,7 +783,6 @@ class Statement
             $this->pdoStatement->closeCursor();
 
             return $result;
-
         } catch (\PDOException $e) {
             throw new Exception(
                 $e->getMessage(),

@@ -25,12 +25,7 @@ class DSNConfiguration implements ConfigurationInterface
      * @param string $password The password for the DSN string. This parameter is optional for some PDO drivers.
      * @param array $options A key=>value array of PDO driver-specific connection options.
      */
-    public function __construct(
-        string $dsn,
-        string $username,
-        string $password,
-        array $options = []
-    )
+    public function __construct(string $dsn, string $username, string $password, array $options = [])
     {
         $this->dsn = $dsn;
         $this->username = $username;
@@ -51,13 +46,11 @@ class DSNConfiguration implements ConfigurationInterface
     public function buildConnection(): Connection
     {
         try {
-
             if (!isset($this->pdo) || !($this->pdo instanceof \PDO)) {
                 $this->pdo = new \PDO($this->dsn, $this->username, $this->password, $this->options);
             }
 
             return new Connection($this->pdo);
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e->errorInfo);
         }

@@ -40,13 +40,11 @@ class Connection
     public function isAlive(): bool
     {
         try {
-
             if (@$this->pdo->query('SELECT 1') == false) {
                 return false;
             }
 
             return true;
-
         } catch (\PDOException $e) {
             return false;
         }
@@ -72,7 +70,6 @@ class Connection
     public function prepare(string $sentence, array $driver_options = [])
     {
         try {
-
             $statement = $this->pdo->prepare($sentence, $driver_options);
 
             if ($statement === false) {
@@ -80,7 +77,6 @@ class Connection
             }
 
             return new Statement($statement);
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo(), $sentence);
         }
@@ -90,7 +86,7 @@ class Connection
      * Retrieve a database connection attribute from the wrapped PDO.
      *
      * @param int $attribute One of the PDO::ATTR_* constants
-     * @return mixed A successful call returns the value of the requested PDO attribute. An unsuccessful call returns null.
+     * @return mixed A successful call returns the value of the requested PDO attribute, otherwise returns null.
      */
     public function getAttribute($attribute)
     {
@@ -109,7 +105,8 @@ class Connection
     {
         if ($attribute === \PDO::ATTR_EMULATE_PREPARES && $value !== false) {
             throw new Exception(
-                'Cozy Database does not allow the use of emulated prepared statements, which would be a security downgrade.',
+                'Cozy Database does not allow the use of emulated prepared statements, ' .
+                'which would be a security downgrade.',
                 'CZ099'
             );
         } elseif ($attribute === \PDO::ATTR_ERRMODE && $value !== \PDO::ERRMODE_EXCEPTION) {
@@ -127,7 +124,8 @@ class Connection
      *
      * @param string $string The string to be quoted.
      * @param int $parameter_type Provides a data type hint for drivers that have alternate quoting styles.
-     * @return string|bool A quoted string that is theoretically safe to pass into an SQL statement. Returns FALSE if the driver does not support quoting in this way.
+     * @return string|bool A quoted string that is theoretically safe to pass into an SQL statement.
+     *         Returns FALSE if the driver does not support quoting in this way.
      */
     public function quote($string, $parameter_type = \PDO::PARAM_STR)
     {
@@ -153,9 +151,7 @@ class Connection
     public function beginTransaction()
     {
         try {
-
             return $this->pdo->beginTransaction();
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
         }
@@ -169,9 +165,7 @@ class Connection
     public function commitTransaction()
     {
         try {
-
             return $this->pdo->commit();
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
         }
@@ -185,9 +179,7 @@ class Connection
     public function rollBackTransaction()
     {
         try {
-
             return $this->pdo->rollBack();
-
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
         }
