@@ -15,18 +15,76 @@ use Cozy\Database\Relational\Exceptions\StatementException;
 class Connection
 {
     /** @var \PDO */
-    protected $pdo;
+    private $pdo;
+    /** @var string */
+    private $dsn;
+    /** @var string */
+    private $username;
+    /** @var string */
+    private $password;
+    /** @var array */
+    private $options = [
+        \PDO::ATTR_TIMEOUT => 1,
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_EMULATE_PREPARES => false,
+    ];
 
     /**
-     * Wraps a PDO instance representing a connection to a database.
+     * Creates an instance that represents a connection to a database.
      *
-     * @param \PDO $pdo Instance of PDO.
+     * @param string $dsn The Data Source Name, or DSN, contains the information required to connect to the database.
+     * @param string $username [optional] The user name for the DSN string. It is optional for some PDO drivers.
+     * @param string $password [optional] The password for the DSN string. It is optional for some PDO drivers.
+     * @param array $options [optional] A key=>value array of driver-specific connection options.
      */
-    public function __construct(\PDO $pdo)
+    public function __construct(string $dsn, string $username = null, string $password = null, array $options = null) {
+        $this->dsn = $dsn;
+        $this->username = $username;
+        $this->password = $password;
+
+        if (isset($options)) {
+            $this->options = array_replace($this->options, $options);
+        }
+    }
+
+    /**
+     * Creates an instance that represents a connection to a database.
+     *
+     * @param array $configuration
+     * @return Connection
+     */
+    public static function fromArray(array $configuration): Connection
     {
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
-        $this->pdo = $pdo;
+        if (!isset($configuration['dsn'])) {
+            throw new Exception("The required directive 'dsn' is missing.");
+        }
+        $dsn = $configuration['dsn'];
+
+        $username = null;
+        if (isset($configuration['username'])) {
+            $username = $configuration['username'];
+        }
+
+        $password = null;
+        if (isset($configuration['password'])) {
+            $password = $configuration['password'];
+        }
+
+        $options = null;
+        if (isset($options)) {
+            $options = $configuration['options'];
+        }
+
+        return new self($dsn, $username, $password, $options);
+    }
+
+    private function buildPDOConnection(): \PDO
+    {
+        try {
+            return new \PDO($this->dsn, $this->username, $this->password, $this->options);
+        } catch (\PDOException $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
     }
 
     /**
@@ -34,15 +92,19 @@ class Connection
      *
      * @return \PDO
      */
-    public function getPdo()
+    public function getPDO(): \PDO
     {
+        if (!isset($this->pdo)) {
+            $this->pdo = $this->buildPDOConnection();
+        }
+
         return $this->pdo;
     }
 
     public function isAlive(): bool
     {
         try {
-            if (@$this->pdo->query('SELECT 1') == false) {
+            if (@$this->getPDO()->query('SELECT 1') == false) {
                 return false;
             }
 
@@ -59,7 +121,7 @@ class Connection
      */
     public function getErrorInfo()
     {
-        return $this->pdo->errorInfo();
+        return $this->getPDO()->errorInfo();
     }
 
     /**
@@ -72,7 +134,7 @@ class Connection
     public function prepare(string $sentence, array $driver_options = [])
     {
         try {
-            $statement = $this->pdo->prepare($sentence, $driver_options);
+            $statement = $this->getPDO()->prepare($sentence, $driver_options);
 
             if ($statement === false) {
                 return false;
@@ -92,7 +154,7 @@ class Connection
      */
     public function getAttribute($attribute)
     {
-        return $this->pdo->getAttribute($attribute);
+        return $this->getPDO()->getAttribute($attribute);
     }
 
     /**
@@ -109,7 +171,7 @@ class Connection
             throw new Exception(
                 'Cozy Database does not allow the use of emulated prepared statements, ' .
                 'which would be a security downgrade.',
-                'CZ099'
+                'CZ096'
             );
         } elseif ($attribute === \PDO::ATTR_ERRMODE && $value !== \PDO::ERRMODE_EXCEPTION) {
             throw new Exception(
@@ -118,7 +180,7 @@ class Connection
             );
         }
 
-        return $this->pdo->setAttribute($attribute, $value);
+        return $this->getPDO()->setAttribute($attribute, $value);
     }
 
     /**
@@ -131,7 +193,7 @@ class Connection
      */
     public function quote($string, $parameter_type = \PDO::PARAM_STR)
     {
-        return $this->pdo->quote($string, $parameter_type);
+        return $this->getPDO()->quote($string, $parameter_type);
     }
 
     /**
@@ -142,7 +204,7 @@ class Connection
      */
     public function getLastInsertId(string $name = null)
     {
-        return $this->pdo->lastInsertId($name);
+        return $this->getPDO()->lastInsertId($name);
     }
 
     /**
@@ -153,7 +215,7 @@ class Connection
     public function beginTransaction()
     {
         try {
-            return $this->pdo->beginTransaction();
+            return $this->getPDO()->beginTransaction();
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -167,7 +229,7 @@ class Connection
     public function commitTransaction()
     {
         try {
-            return $this->pdo->commit();
+            return $this->getPDO()->commit();
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -181,7 +243,7 @@ class Connection
     public function rollBackTransaction()
     {
         try {
-            return $this->pdo->rollBack();
+            return $this->getPDO()->rollBack();
         } catch (\PDOException $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -194,6 +256,6 @@ class Connection
      */
     public function inTransaction()
     {
-        return $this->pdo->inTransaction();
+        return $this->getPDO()->inTransaction();
     }
 }
