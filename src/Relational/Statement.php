@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Cozy\Database\Relational;
 
+use Cozy\Database\Relational\Exceptions\StatementException;
+
 class Statement
 {
     /** @var \PDOStatement */
@@ -72,7 +74,7 @@ class Statement
      * @param mixed $value The value to bind to the parameter.
      * @param mixed $type [optional] Explicit data type for the parameter.
      * @return $this
-     * @throws Exception
+     * @throws StatementException
      */
     public function bindValue($parameter, $value, $type = 'str')
     {
@@ -89,11 +91,11 @@ class Statement
         }
 
         if (!$this->pdoStatement->bindValue($parameter, $value, $pdo_type)) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 "Error binding invalid parameter [{$parameter}], it was not defined.",
                 $this->pdoStatement->errorCode(),
-                $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $this->pdoStatement->errorInfo()
             );
         }
 
@@ -109,7 +111,7 @@ class Statement
      * @param mixed $param Name of the PHP variable to which the column will be bound.
      * @param mixed $type [optional] Data type of the parameter, specified by the PDO::PARAM_* constants.
      * @return $this
-     * @throws Exception
+     * @throws StatementException
      */
     public function bindColumn($column, &$param, $type = null)
     {
@@ -124,11 +126,11 @@ class Statement
         }
 
         if (!$this->pdoStatement->bindColumn($column, $param, $pdo_type)) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 "Error binding invalid column [{$column}], it was not defined.",
                 $this->pdoStatement->errorCode(),
-                $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $this->pdoStatement->errorInfo()
             );
         }
 
@@ -151,7 +153,7 @@ class Statement
      * Execute the statement.
      *
      * @return bool TRUE on success or FALSE on failure.
-     * @throws Exception
+     * @throws StatementException
      */
     public function execute(): bool
     {
@@ -165,11 +167,12 @@ class Statement
 
             return false;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
                 $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -212,7 +215,7 @@ class Statement
      * Closes the cursor, enabling the statement to be executed again.
      *
      * @return bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function closeCursor(): bool
     {
@@ -225,11 +228,12 @@ class Statement
 
             return false;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
                 $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -244,11 +248,12 @@ class Statement
         try {
             return $this->pdoStatement->nextRowset();
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
                 $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -257,7 +262,7 @@ class Statement
      * Fetches the next row from a result set according to cursor.
      *
      * @return mixed|null
-     * @throws Exception
+     * @throws StatementException
      */
     private function internalFetch()
     {
@@ -271,11 +276,10 @@ class Statement
             // Validate previous execution
 
             if (!$this->wasExecutedSuccessfully) {
-                throw new Exception(
+                throw new StatementException(
+                    $this->pdoStatement->queryString,
                     'Fetching without previous successful execution.',
-                    'CZ001',
-                    [],
-                    $this->pdoStatement->queryString
+                    'CZ001'
                 );
             }
 
@@ -291,11 +295,12 @@ class Statement
 
             return $row;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
-                (string)$e->getCode(),
+                $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -307,7 +312,7 @@ class Statement
      * they were bound with the bindColumn() method.
      *
      * @return bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchBound()
     {
@@ -323,7 +328,7 @@ class Statement
      * - False, if there was an error.
      *
      * @return mixed|null
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAsArray()
     {
@@ -341,7 +346,7 @@ class Statement
      * @param string $className Name of the created class.
      * @param array|null $classArguments Elements of this array are passed to the constructor.
      * @return mixed|null
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAsObject(string $className = 'stdClass', array $classArguments = null)
     {
@@ -363,7 +368,7 @@ class Statement
      *
      * @param object $object Object to update.
      * @return object|bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchIntoObject($object)
     {
@@ -385,7 +390,7 @@ class Statement
      *
      * @param string $column Name of column you wish to retrieve.
      * @return mixed
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAsColumn(string $column)
     {
@@ -406,11 +411,10 @@ class Statement
         }
 
         if (!isset($row[$column])) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 "The column '{$column}' is not present in the result set.",
-                'CZ002',
-                [],
-                $this->pdoStatement->queryString
+                'CZ002'
             );
         }
 
@@ -425,7 +429,7 @@ class Statement
      * @param string $column Name of column you wish to retrieve.
      * @param string $index_by Name of the column you want to assign as a row key.
      * @return array|bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAllAsColumn(string $column, string $index_by = null)
     {
@@ -464,20 +468,18 @@ class Statement
             }
 
             if (!isset($row[$column])) {
-                throw new Exception(
+                throw new StatementException(
+                    $this->pdoStatement->queryString,
                     "The column '{$column}' is not present in the result set.",
-                    'CZ002',
-                    [],
-                    $this->pdoStatement->queryString
+                    'CZ002'
                 );
             }
 
             if ($index_by && !isset($row[$index_by])) {
-                throw new Exception(
+                throw new StatementException(
+                    $this->pdoStatement->queryString,
                     "The column '{$index_by}' is not present in the result set.",
-                    'CZ002',
-                    [],
-                    $this->pdoStatement->queryString
+                    'CZ002'
                 );
             }
 
@@ -499,11 +501,12 @@ class Statement
 
             return $result;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
-                (string)$e->getCode(),
+                $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -515,7 +518,7 @@ class Statement
      * @param string $group_by Name of the columns with which you want to group the result. You can include
      *                         maximum 3 columns by separating them with commas.
      * @return array|bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAllAsArray(string $index_by = null, string $group_by = null)
     {
@@ -555,11 +558,10 @@ class Statement
             }
 
             if ($index_by && !array_key_exists($index_by, $row)) {
-                throw new Exception(
+                throw new StatementException(
+                    $this->pdoStatement->queryString,
                     "The column '{$index_by}' is not present in the result set.",
-                    'CZ002',
-                    [],
-                    $this->pdoStatement->queryString
+                    'CZ002'
                 );
             }
 
@@ -579,12 +581,11 @@ class Statement
                     }
 
                     if ($column_err) {
-                        throw new Exception(
+                        throw new StatementException(
+                            $this->pdoStatement->queryString,
                             'Some columns to group-by (' . implode(', ', $column_err) .
                             ') are not present in the result set.',
-                            'CZ002',
-                            [],
-                            $this->pdoStatement->queryString
+                            'CZ002'
                         );
                     }
                 }
@@ -632,11 +633,12 @@ class Statement
 
             return $result;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
-                (string)$e->getCode(),
+                $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
@@ -650,7 +652,7 @@ class Statement
      * @param string $group_by Name of the columns with which you want to group the result. You can include
      *                         maximum 3 columns by separating them with commas.
      * @return array|bool
-     * @throws Exception
+     * @throws StatementException
      */
     public function fetchAllAsObject(
         string $class_name = 'stdClass',
@@ -698,11 +700,10 @@ class Statement
             }
 
             if ($index_by && !property_exists($row, $index_by)) {
-                throw new Exception(
+                throw new StatementException(
+                    $this->pdoStatement->queryString,
                     "The column '{$index_by}' is not present in the result set.",
-                    'CZ002',
-                    [],
-                    $this->pdoStatement->queryString
+                    'CZ002'
                 );
             }
 
@@ -724,12 +725,11 @@ class Statement
                     }
 
                     if ($column_err) {
-                        throw new Exception(
+                        throw new StatementException(
+                            $this->pdoStatement->queryString,
                             'Some columns to group-by (' . implode(', ', $column_err) .
                             ') are not present in the result set.',
-                            'CZ002',
-                            [],
-                            $this->pdoStatement->queryString
+                            'CZ002'
                         );
                     }
                 }
@@ -784,11 +784,12 @@ class Statement
 
             return $result;
         } catch (\PDOException $e) {
-            throw new Exception(
+            throw new StatementException(
+                $this->pdoStatement->queryString,
                 $e->getMessage(),
-                (string)$e->getCode(),
+                $e->getCode(),
                 $this->pdoStatement->errorInfo(),
-                $this->pdoStatement->queryString
+                $e
             );
         }
     }
