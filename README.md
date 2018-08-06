@@ -51,7 +51,7 @@ foreach ($settings['database']['slave'] as $database_info) {
     $db_pool->addConnection(Connection::fromArray($database_info), 'slave');
 }
 
-$account = $db->getConnection('slave')
+$account = $db_pool->getConnection('slave')
     ->prepare('SELECT * FROM schema.accounts WHERE id = :id')
     ->bindValue(':id', '6b70a1f7-2a41-4da3-9fdb-f8b60273dec1', 'string')
     ->fetchAsObject(Account::class);
