@@ -48,7 +48,6 @@ class ConnectionPool
             shuffle($this->pool[$tag]);
         }
 
-//        $connection = array_shift($this->pool[$tag]);
         while (null !== ($connection = array_shift($this->pool[$tag]))) {
             try {
                 if ($connection->isAlive()) {
