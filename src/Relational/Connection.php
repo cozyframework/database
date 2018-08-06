@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Cozy\Database\Relational;
 
+use Cozy\Database\Relational\Exceptions\Exception;
+use Cozy\Database\Relational\Exceptions\StatementException;
+
 /**
  * Represents a connection to a relational database server.
  * It encapsulates a PDO instance to simplify and improve its functionality, in addition to
@@ -13,7 +16,6 @@ class Connection
 {
     /** @var \PDO */
     protected $pdo;
-    protected $statements = [];
 
     /**
      * Wraps a PDO instance representing a connection to a database.
@@ -78,7 +80,7 @@ class Connection
 
             return new Statement($statement);
         } catch (\PDOException $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo(), $sentence);
+            throw new StatementException($sentence, $e->getMessage(), $e->getCode(), $this->pdo->errorInfo(), $e);
         }
     }
 
@@ -153,7 +155,7 @@ class Connection
         try {
             return $this->pdo->beginTransaction();
         } catch (\PDOException $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -167,7 +169,7 @@ class Connection
         try {
             return $this->pdo->commit();
         } catch (\PDOException $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -181,7 +183,7 @@ class Connection
         try {
             return $this->pdo->rollBack();
         } catch (\PDOException $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $this->pdo->errorInfo());
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
     }
 
