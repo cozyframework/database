@@ -140,7 +140,7 @@ class Connection
                 return false;
             }
 
-            return new Statement($statement);
+            return new Statement($statement, $this);
         } catch (\PDOException $e) {
             throw new StatementException($sentence, $e->getMessage(), $e->getCode(), $this->pdo->errorInfo(), $e);
         }

@@ -10,6 +10,8 @@ class Statement
 {
     /** @var \PDOStatement */
     protected $pdoStatement;
+    /** @var Connection */
+    protected $connection;
     protected $wasExecuted = false;
     protected $wasExecutedSuccessfully = false;
     protected $autoExecuteEnabled = true;
@@ -18,10 +20,22 @@ class Statement
      * Statement constructor that wraps a PDOStatement object.
      *
      * @param \PDOStatement $pdoStatement
+     * @param Connection $connection
      */
-    public function __construct(\PDOStatement $pdoStatement)
+    public function __construct(\PDOStatement $pdoStatement, Connection $connection)
     {
         $this->pdoStatement = $pdoStatement;
+        $this->connection = $connection;
+    }
+
+    /**
+     * Returns the parent Connection object.
+     *
+     * @return Connection
+     */
+    public function getConnection(): Connection
+    {
+        return $this->connection;
     }
 
     /**
