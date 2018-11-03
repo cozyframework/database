@@ -8,6 +8,11 @@ use Cozy\Database\Relational\Exceptions\StatementException;
 
 class Statement
 {
+    public const PARAM_INT = \PDO::PARAM_INT;
+    public const PARAM_STR = \PDO::PARAM_STR;
+    public const PARAM_NULL = \PDO::PARAM_NULL;
+    public const PARAM_BOOL = \PDO::PARAM_BOOL;
+
     /** @var \PDOStatement */
     protected $pdoStatement;
     /** @var Connection */
@@ -721,6 +726,14 @@ class Statement
                 );
             }
 
+            $getProperty = function ($object, $property) {
+                return $object->{$property};
+            };
+
+            $checkProperty = function ($object, $property) {
+                return property_exists($object, $property);
+            };
+
             if ($group_by) {
                 $group_by = explode(',', str_replace(' ', '', $group_by));
                 $groupByCount = count($group_by);
@@ -731,60 +744,74 @@ class Statement
                     );
                 }
 
-                foreach ($group_by as $column) {
-                    $column_err = [];
+                $column_err = [];
+                if ($class_name != 'stdClass') {
+                    $checkProperty = \Closure::bind($checkProperty, null, $row);
+                }
 
-                    if (!property_exists($row, $column)) {
+                foreach ($group_by as $column) {
+                    if (!$checkProperty($row, $column)) {
                         $column_err[] = $column;
                     }
+                }
 
-                    if ($column_err) {
-                        throw new StatementException(
-                            $this->pdoStatement->queryString,
-                            'Some columns to group-by (' . implode(', ', $column_err) .
-                            ') are not present in the result set.',
-                            'CZ002'
-                        );
-                    }
+                if ($column_err) {
+                    throw new StatementException(
+                        $this->pdoStatement->queryString,
+                        'Some columns to group-by (' . implode(', ', $column_err) .
+                        ') are not present in the result set.',
+                        'CZ002'
+                    );
                 }
             }
 
             // Traversing the remaining rows
 
             while ($row) {
+                if ($class_name != 'stdClass') {
+                    $getProperty = \Closure::bind($getProperty, null, $row);
+                }
+
                 if (!$index_by && !$group_by) {
                     $result[] = $row;
                 } elseif ($index_by && !$group_by) {
-                    $result[$row->{$index_by}] = $row;
+                    $index = $getProperty($row, $index_by);
+                    $result[$index] = $row;
                 } elseif ($index_by && $group_by) {
+                    $index = $getProperty($row, $index_by);
                     switch ($groupByCount) {
                         case 3:
-                            $temp = [
-                                $row->{$group_by[2]} => [
-                                    $row->{$index_by} => $row
-                                ]
-                            ];
-                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}] = $temp;
-// $result[$row->{$group_by[0]}][$row->{$group_by[1]}] >>>>
-// <<<< [$row->{$group_by[2]}][$row->{$index_by}] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $group_by_1 = $getProperty($row, $group_by[1]);
+                            $group_by_2 = $getProperty($row, $group_by[2]);
+                            $result[$group_by_0][$group_by_1][$group_by_2][$index] = $row;
                             break;
                         case 2:
-                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}][$row->{$index_by}] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $group_by_1 = $getProperty($row, $group_by[1]);
+                            $result[$group_by_0][$group_by_1][$index] = $row;
                             break;
                         case 1:
-                            $result[$row->{$group_by[0]}][$row->{$index_by}] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $result[$group_by_0][$index] = $row;
                             break;
                     }
                 } elseif (!$index_by && $group_by) {
                     switch ($groupByCount) {
                         case 3:
-                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}][$row->{$group_by[2]}][] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $group_by_1 = $getProperty($row, $group_by[1]);
+                            $group_by_2 = $getProperty($row, $group_by[2]);
+                            $result[$group_by_0][$group_by_1][$group_by_2][] = $row;
                             break;
                         case 2:
-                            $result[$row->{$group_by[0]}][$row->{$group_by[1]}][] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $group_by_1 = $getProperty($row, $group_by[1]);
+                            $result[$group_by_0][$group_by_1][] = $row;
                             break;
                         case 1:
-                            $result[$row->{$group_by[0]}][] = $row;
+                            $group_by_0 = $getProperty($row, $group_by[0]);
+                            $result[$group_by_0][] = $row;
                             break;
                     }
                 }
