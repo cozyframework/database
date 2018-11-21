@@ -99,14 +99,14 @@ class Statement
     {
         $pdo_type = \PDO::PARAM_STR;
 
-        if ($type === 'int' || $type === 'integer' || $type === \PDO::PARAM_INT) {
+        if ($type === 'null' || $type === \PDO::PARAM_NULL || $value === null) {
+            $pdo_type = \PDO::PARAM_NULL;
+        } elseif ($type === 'int' || $type === 'integer' || $type === \PDO::PARAM_INT) {
             $pdo_type = \PDO::PARAM_INT;
         } elseif ($type === 'bool' || $type === 'boolean' || $type === \PDO::PARAM_BOOL) {
             $pdo_type = \PDO::PARAM_BOOL;
         } elseif ($type === 'lob' || $type === 'blob' || $type === \PDO::PARAM_LOB) {
             $pdo_type = \PDO::PARAM_LOB;
-        } elseif ($type === 'null' || $type === \PDO::PARAM_NULL || $value === null) {
-            $pdo_type = \PDO::PARAM_NULL;
         }
 
         if (!$this->pdoStatement->bindValue($parameter, $value, $pdo_type)) {
