@@ -480,7 +480,7 @@ class Statement
                 $this->pdoStatement->closeCursor();
 
                 if ($this->pdoStatement->errorCode() === '00000') {
-                    return null;
+                    return [];
                 }
 
                 return false;
@@ -570,7 +570,7 @@ class Statement
                 $this->pdoStatement->closeCursor();
 
                 if ($this->pdoStatement->errorCode() === '00000') {
-                    return null;
+                    return [];
                 }
 
                 return false;
@@ -712,7 +712,7 @@ class Statement
                 $this->pdoStatement->closeCursor();
 
                 if ($this->pdoStatement->errorCode() === '00000') {
-                    return null;
+                    return [];
                 }
 
                 return false;
